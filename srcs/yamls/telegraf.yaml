@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegraf
+spec:
+  selector:
+    matchLabels:
+      app: telegraf
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: telegraf
+    spec:
+      containers:
+        - image: telegraf_img
+          imagePullPolicy: Never
+          name: telegraf
+          volumeMounts:
+            - name: telegraf-volume
+              mountPath: /var/run/docker.sock
+      volumes:
+        - name: telegraf-volume
+          persistentVolumeClaim:
+            claimName: telegraf-volume-claim
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: telegraf-volume
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 500Mi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/var/run/docker.sock"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: telegraf-volume-claim
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
